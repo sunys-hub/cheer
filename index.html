@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 응원</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #ffe8d6;
+    --bg2: #fbd3e0;
+    --card: rgba(255, 255, 255, 0.72);
+    --text: #4a3b3b;
+    --sub: #8a7676;
+    --accent: #e8758f;
+    --btn: rgba(255, 255, 255, 0.85);
+    --shadow: 0 12px 40px rgba(180, 100, 120, 0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --card: rgba(40, 32, 44, 0.72);
+      --text: #f4e9ec;
+      --sub: #bba9b0;
+      --accent: #ff9fb4;
+      --btn: rgba(60, 48, 64, 0.85);
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Gowun Dodum', sans-serif;
+    color: var(--text);
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    transition: background 0.8s;
+  }
+  .wrap {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+  }
+  .date {
+    font-size: 14px;
+    color: var(--sub);
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .greeting {
+    font-size: 18px;
+    margin-bottom: 28px;
+  }
+  .card {
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 28px;
+    padding: 48px 32px;
+    box-shadow: var(--shadow);
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .to {
+    font-size: 14px;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  .message {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 21px;
+    line-height: 1.75;
+    word-break: keep-all;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .message.show { opacity: 1; transform: translateY(0); }
+  .heart-deco {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    font-size: 18px;
+    opacity: 0.5;
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--btn);
+    border: none;
+    border-radius: 999px;
+    padding: 12px 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    transition: transform 0.15s, background 0.2s;
+  }
+  button:hover { transform: translateY(-2px); }
+  button:active { transform: scale(0.96); }
+  button.liked { color: var(--accent); }
+  .toast {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--sub);
+    height: 18px;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .toast.show { opacity: 1; }
+  .footer {
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--sub);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="date" id="date"></div>
+    <div class="greeting" id="greeting"></div>
+
+    <div class="card">
+      <span class="heart-deco">♡</span>
+      <p class="message" id="message"></p>
+    </div>
+
+    <div class="actions">
+      <button id="nextBtn">🌷 다른 응원 보기</button>
+      <button id="likeBtn">♡ 마음에 들어요</button>
+      <button id="copyBtn">📋 복사</button>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <div class="footer">매일 하나씩, 새로운 응원이 도착해요</div>
+  </div>
+
+<script>
+  const messages = [
+    "오늘도 좋은 하루 보내요. 당신이 웃으면 제 하루도 같이 밝아져요.",
+    "바쁜 하루 중에도 밥은 꼭 챙겨 먹기로 약속해요.",
+    "당신이 쓰는 문장처럼, 오늘 하루도 단단하고 따뜻하길 바라요.",
+    "마감에 쫓기는 날에도 잊지 말아요. 이미 충분히 잘하고 있어요.",
+    "오늘 조금 지쳤다면, 그건 그만큼 열심히 살았다는 뜻이에요. 수고했어요.",
+    "하루 끝에 작은 행복 하나쯤은 꼭 기다리고 있기를.",
+    "세상 이야기를 전하느라 바쁜 하루, 오늘은 당신의 이야기도 들려줘요.",
+    "생각하면 괜히 웃음이 나요. 오늘도 그런 하루였으면 좋겠어요.",
+    "취재 현장이 아무리 차가워도, 곁엔 늘 응원하는 사람이 있다는 걸 기억해요.",
+    "오늘 하루, 좋은 소식만 가득하길!",
+    "잘 안 풀리는 날도 있죠. 그래도 결국 해내는 사람이라는 걸 알아요.",
+    "따뜻한 커피 한 잔의 여유, 오늘 꼭 스스로에게 선물해 주세요.",
+    "당신의 진심은 언제나 전해져요. 글에도, 사람에게도.",
+    "오늘 날씨가 어떻든, 마음엔 맑음이었으면 해요.",
+    "누군가는 당신 덕분에 오늘을 버텨요. 그중 한 명이 저예요.",
+    "무리하지 말고, 쉬고 싶을 땐 쉬어도 괜찮아요.",
+    "좋아하는 노래 한 곡 들으면서 잠깐 숨 돌려요.",
+    "오늘의 헤드라인: 「오늘도 멋지게 해내다」",
+    "당신이 행복했으면 좋겠어요. 그게 제 오늘의 소원이에요.",
+    "어제보다 조금만 더 편안한 하루가 되길 바라요.",
+    "질문하는 용기, 끝까지 확인하는 꼼꼼함. 그런 점이 참 멋져요.",
+    "오늘 하루도 당신 편이에요. 내일도, 그다음 날도요.",
+    "힘든 일은 짧게, 좋은 일은 길게 머무는 하루가 되길.",
+    "오늘 거울 보면 꼭 한 번 웃어줘요. 정말 예쁜 미소니까요.",
+    "특종보다 소중한 건 당신의 건강이에요. 물 많이 마시기!",
+    "오늘 만나는 모든 사람이 친절하기를.",
+    "당신이라는 사람을 알게 된 게, 제 요즘 가장 좋은 뉴스예요.",
+    "퇴근길 하늘 한 번 올려다봐요. 오늘 수고한 당신에게 보내는 노을일지도 몰라요.",
+    "완벽하지 않아도 괜찮아요. 있는 그대로 충분히 빛나요.",
+    "오늘 하루의 마침표는, 편안한 잠으로 찍기로 해요. 잘 자요.",
+    "웃는 모습을 떠올리며 이 메시지를 썼어요.",
+    "작은 일에도 기뻐할 줄 아는 당신의 하루가 작은 기쁨들로 가득하길.",
+    "오늘도 세상을 조금 더 좋게 만들어줘서 고마워요.",
+    "어떤 하루를 보냈든, 저는 오늘의 당신을 응원해요.",
+    "오늘 하루 중 가장 좋았던 순간이 오래오래 기억에 남길."
+  ];
+
+  const now = new Date();
+  const dayNames = ["일요일","월요일","화요일","수요일","목요일","금요일","토요일"];
+  document.getElementById("date").textContent =
+    `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${dayNames[now.getDay()]}`;
+
+  // 시간대별 인사
+  const h = now.getHours();
+  let greet;
+  if (h < 6) greet = "늦은 밤까지 고생 많았어요 🌙";
+  else if (h < 11) greet = "좋은 아침이에요 ☀️";
+  else if (h < 14) greet = "점심은 맛있게 드셨어요? 🍚";
+  else if (h < 18) greet = "오후도 힘내요 🌤️";
+  else if (h < 22) greet = "오늘 하루 정말 수고했어요 🌇";
+  else greet = "포근한 밤 보내요 🌙";
+  document.getElementById("greeting").textContent = "최기자님, " + greet;
+
+  // 요일별 배경색
+  const palettes = [
+    ["#e0f0ff", "#f3e0ff"], // 일
+    ["#fff1c9", "#ffd6d6"], // 월 - 활기찬
+    ["#d9f5e8", "#e3f0ff"], // 화
+    ["#ffe8d6", "#fbd3e0"], // 수
+    ["#e8e2ff", "#ffe0ef"], // 목
+    ["#ffd9b8", "#ffc6c6"], // 금 - 따뜻한
+    ["#d6f0ff", "#e6ffe9"]  // 토
+  ];
+  const isDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (!isDark) {
+    const [c1, c2] = palettes[now.getDay()];
+    document.documentElement.style.setProperty("--bg1", c1);
+    document.documentElement.style.setProperty("--bg2", c2);
+  } else {
+    document.documentElement.style.setProperty("--bg1", "#2a2030");
+    document.documentElement.style.setProperty("--bg2", "#3a2836");
+  }
+
+  // 날짜 기반 오늘의 메시지 (하루 동안 고정)
+  const dayIndex = Math.floor(new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 86400000);
+  let current = dayIndex % messages.length;
+
+  const msgEl = document.getElementById("message");
+  const likeBtn = document.getElementById("likeBtn");
+  const toastEl = document.getElementById("toast");
+
+  function getLikes() {
+    try { return JSON.parse(localStorage.getItem("choiLikes") || "[]"); }
+    catch (e) { return []; }
+  }
+  function setLikes(arr) {
+    try { localStorage.setItem("choiLikes", JSON.stringify(arr)); } catch (e) {}
+  }
+
+  function render() {
+    msgEl.classList.remove("show");
+    setTimeout(() => {
+      msgEl.textContent = messages[current];
+      msgEl.classList.add("show");
+      const liked = getLikes().includes(current);
+      likeBtn.textContent = liked ? "♥ 마음에 들어요" : "♡ 마음에 들어요";
+      likeBtn.classList.toggle("liked", liked);
+    }, 250);
+  }
+
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add("show");
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => toastEl.classList.remove("show"), 1800);
+  }
+
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    let next;
+    do { next = Math.floor(Math.random() * messages.length); } while (next === current);
+    current = next;
+    render();
+  });
+
+  likeBtn.addEventListener("click", () => {
+    let likes = getLikes();
+    if (likes.includes(current)) {
+      likes = likes.filter(i => i !== current);
+      toast("마음에 들어요를 취소했어요");
+    } else {
+      likes.push(current);
+      toast("이 메시지를 간직했어요 💛");
+    }
+    setLikes(likes);
+    render();
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", async () => {
+    const text = messages[current];
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("메시지를 복사했어요");
+    } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); toast("메시지를 복사했어요"); }
+      catch (err) { toast("복사에 실패했어요"); }
+      ta.remove();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
